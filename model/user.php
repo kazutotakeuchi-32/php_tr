@@ -1,22 +1,26 @@
 <?php
+
 class User {
-  public static $g = "TE";
+  
   public $name;
   public $age ;
   public $password;
   public $email;
 
-  public function __construct(string $name, int $age, string $password, string $email)
+  public function __construct(string $firstname, string $lastname, int $age, string $password, string $email)
   {
-    $this->name = $name;
+    $this->firstname = $firstname;
+    $this->lastname = $lastname; 
     $this->age = $age;
     $this->password = $password;
     $this->email = $email;
   } 
 
+  // ゲッター
+
   public function getName(): string
   {
-    return $this->name;
+    return $this->firstname . " " . $this->lastname;
   }
 
   public function getAge(): int
@@ -33,6 +37,8 @@ class User {
   {
     return $this->email;
   }
+
+  // セッター
 
   public function setName(string $name): void
   {
@@ -54,16 +60,96 @@ class User {
     $this->email = $email;
   }
 
-  static public function test(): void{
-    echo "test";
-  }
-
   public function __toString()
   {
     return "User: " . $this->name . " " . $this->age . " " . $this->password . " " . $this->email;
   }
 
+  static public function create($params):array {
+    try {
+      $dbh = Db::connect();
+      $sql = "INSERT INTO users (firstname, lastname, age, password, email) VALUES (:firstname, :lastname, :age, :password, :email)";
+      $stmt = $dbh->prepare($sql);
+      $stmt->bindValue(":firstname", $params["firstname"]);
+      $stmt->bindValue(":lastname", $params["lastname"]);
+      $stmt->bindValue(":age", $params["age"]);
+      $stmt->bindValue(":password", $params["password"]);
+      $stmt->bindValue(":email", $params["email"]);
+      $stmt->execute();
+      $dbh = null;
+      return ["status" => "success"];
+    } catch (\Throwable $th) {
+      return ["status" => "error", "message" => $th->getMessage()];
+    }
+  }
+
+  static public function find(int $id):array {
+    try {
+      $dbh = Db::connect();
+      $sql = "SELECT * FROM users WHERE id = :id" ;
+      $stmt = $dbh->prepare($sql);
+      $stmt->bindValue(":id", $id);
+      $stmt->execute();
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      $dbh = null;
+      return ["status" => "success", "data" => $result];
+     } catch (\Throwable $th) {
+      throw $th;
+    }
+  }
+
+  static public function All(array $params):array {
+    try {
+      $db = Db::connect();
+      $sql = "SELECT * FROM users";
+      $stmt = $db->prepare($sql);
+      $stmt->execute();
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      $db = null;
+      return ["status" => "success", "data" => $result];
+    } catch (\Throwable $th) {
+      throw $th;
+    }
+  }
+
+  function validation(): bool {
+    if(!$this->name || !$this->age || !$this->password || !$this->email){
+      return false;
+    }
+    if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+      return false;
+    }
+    if(!preg_match("/^[a-zA-Z0-9]{4,}$/", $this->password)){
+      return false;
+    }
+    if(!preg_match("/^[a-zA-Z0-9]{4,}$/", $this->name)){
+      return false;
+    }
+    if(!preg_match("/^[0-9]{1,3}$/", $this->age)){
+      return false;
+    }
+    return true;
+  }
+
+  static public function update(array $params): array {
+    try {
+      $dbh = Db::connect();
+      $sql = "UPDATE users SET firstname = :firstname, lastname = :lastname, age = :age, email = :email WHERE id = :id";
+      $stmt = $dbh->prepare($sql);
+      $stmt->bindValue(":firstname", $params["firstname"]);
+      $stmt->bindValue(":lastname", $params["lastname"]);
+      $stmt->bindValue(":age", $params["age"]);
+      $stmt->bindValue(":email", $params["email"]);
+      $stmt->bindValue(":id", $params["id"]);
+      $stmt->execute();
+      $dbh = null;
+      return ["status" => "success"];
+    } catch (\Throwable $th) {
+      return ["status" => "error", "message" => $th->getMessage()];
+    }
+  }
+
 }
 
-$user = new User("kazuto", 10, "", "");
+$user = new User("John", "Doe", 25, "12345", "");
 echo $user->__toString();
