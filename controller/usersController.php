@@ -10,5 +10,3 @@ class UsersContoroller
   }
 }
 
-
-UsersContoroller::render();

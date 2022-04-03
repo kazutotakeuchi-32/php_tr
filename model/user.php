@@ -67,6 +67,9 @@ class User {
 
   static public function create($params):array {
     try {
+      if(is_bool($this->validation($params)) === false){
+        throw new Exception("入力された値が不正です");
+      }
       $dbh = Db::connect();
       $sql = "INSERT INTO users (firstname, lastname, age, password, email) VALUES (:firstname, :lastname, :age, :password, :email)";
       $stmt = $dbh->prepare($sql);
@@ -98,6 +101,21 @@ class User {
     }
   }
 
+  static public function findByEmail(string $email):array {
+    try {
+      $dbh = Db::connect();
+      $sql = "SELECT * FROM users WHERE email = :email" ;
+      $stmt = $dbh->prepare($sql);
+      $stmt->bindValue(":email", $email);
+      $stmt->execute();
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      $dbh = null;
+      return ["status" => "success", "data" => $result];
+     } catch (\Throwable $th) {
+      throw $th;
+    }
+  }
+
   static public function All(array $params):array {
     try {
       $db = Db::connect();
@@ -112,17 +130,23 @@ class User {
     }
   }
 
-  function validation(): bool {
-    if(!$this->name || !$this->age || !$this->password || !$this->email){
+  function validation($params): bool {
+    if(!isset($params["firstname"]) || !isset($params["lastname"]) || !isset($params["age"]) || !isset($params["password"]) || !isset($params["email"])){
       return false;
     }
-    if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+    if (!filter_var($params["email"], FILTER_VALIDATE_EMAIL)) {
       return false;
     }
-    if(!preg_match("/^[a-zA-Z0-9]{4,}$/", $this->password)){
+    if(!preg_match("/^[a-zA-Z0-9]{4,}$/", $params["password"])){
       return false;
     }
-    if(!preg_match("/^[a-zA-Z0-9]{4,}$/", $this->name)){
+    if(!preg_match("/^[a-zA-Z0-9]{4,}$/", $params["firstname"])){
+      return false;
+    }
+    if(!preg_match("/^[a-zA-Z0-9]{4,}$/", $params["lastname"])){
+      return false;
+    }
+    if(!preg_match("/^[0-9]{1,3}$/", $params["age"])){
       return false;
     }
     if(!preg_match("/^[0-9]{1,3}$/", $this->age)){
@@ -133,6 +157,10 @@ class User {
 
   static public function update(array $params): array {
     try {
+      if(is_bool($this->validation($params)) === false){
+        throw new Exception("入力された値が不正です");
+      }
+
       $dbh = Db::connect();
       $sql = "UPDATE users SET firstname = :firstname, lastname = :lastname, age = :age, email = :email WHERE id = :id";
       $stmt = $dbh->prepare($sql);
