@@ -31,3 +31,8 @@ var_dump($result);
 
 /* 対話シェル php -a */
 
+
+// パスワード認証
+$pass = password_hash("jjojfjoojrpjf", PASSWORD_DEFAULT);
+echo $pass.PHP_EOL;
+var_dump(password_verify("jjojfjoojrpj", $pass) == true);

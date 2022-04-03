@@ -3,7 +3,7 @@ class User {
   public static $g = "TE";
   public $name;
   public $age ;
-  public $password
+  public $password;
   public $email;
 
   public function __construct(string $name, int $age, string $password, string $email)
